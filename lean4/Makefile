@@ -25,6 +25,7 @@ include deps/galois_stdlib/Makefile.include
 include deps/llvm-tablegen-support/Makefile.include
 include deps/x86_semantics/Makefile.include
 include simulator/Makefile.include
+include app/Makefile.include
 
 #LEANFILES are absolute, we need them to be relative to the root dir for the rest to work.
 LEANFILES_REL := ${patsubst ${SRCROOT}%,%,${LEANFILES}}
@@ -49,7 +50,11 @@ MAKEDEPEND = $(LEAN) --deps $< | sed 's@${LCSRCROOT}@@p' | xargs echo "$(BUILDDI
 
 # depend: ${DEPENDS}
 
+env:
+	echo "LEAN_PATH=${LEAN_PATH}"
+
 all: $(TARGET)
+
 
 $(TARGET): ${CPPLEAN} ${EXTRAOBJ}
 	${LEANC} ${CXXFLAGS} `${LLVM_CONFIG} --cxxflags` -Wno-variadic-macros -Wno-gnu-zero-variadic-macro-arguments  -fexceptions -o $@ $^ `${LLVM_CONFIG} --ldflags --system-libs --libs x86` -lstdc++

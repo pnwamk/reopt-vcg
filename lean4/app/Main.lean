@@ -1,27 +1,32 @@
-import Init.System.IO
-import Init.Data.RBMap
-import Init.Data.PersistentHashMap
+import Galois.Data.ByteArray
 import Init.Control.Functor
 import Init.Control.Reader
-
--- import X86Semantics.MachineMemory
+import Init.Data.PersistentHashMap
+import Init.Data.RBMap
+import Init.System.IO
+import X86Semantics.Common
 
 -- WIP, mimicing behavior from :
 -- https://github.com/GaloisInc/reopt/blob/master/reopt-vcg/app/Main.hs
 
+namespace ReoptVCG
 
 ------------------------------------------------------
 -- FIXME -- stub definitions
 ------------------------------------------------------
 
 
-def ByteString := List UInt8
-instance ByteString.HasLess : HasLess ByteString := List.HasLess
+-- TODO(AMK) swap `ByteString` for `ByteArray` directly
+def ByteString := ByteArray 
+namespace ByteString
+def lt := ByteArray.lt
+def fromString (s:String) : ByteString := ByteArray.fromString s
+end ByteString
 
-def ByteString.fromString (s:String) : ByteString := [] -- FIXME
 
--- Macaw types and similar
-def Ty := Unit -- FIXME --  was just `Type` from Macaw.CFG
+-- CHECK:
+-- TODO(AMK) swap `Ty` (was `Type` from Macaw.CFG) for `X86Semantics.Common.type` directly?
+def Ty := mc_semantics.type -- FIXME --  was just `Type` from Macaw.CFG
 def Ty.toString (_:Ty) : String := "TODO(Ty.toString)"
 instance Ty.HasToString : HasToString Ty := ⟨Ty.toString⟩
 
@@ -264,7 +269,7 @@ structure ModuleVCG.Context :=
   -- ^ Annotations for module.
   (moduleMem : Memory 64)
   -- ^ Machine code memory
-  (symbolAddrMap : RBMap ByteString (MemSegmentOff 64) (λ x y => x < y))
+  (symbolAddrMap : RBMap ByteString (MemSegmentOff 64) ByteString.lt)
   -- ^ Maps bytes to the symbol name
   (writeStderr : Bool)
   -- ^ Controls whether logs, warnings or errors
@@ -432,30 +437,30 @@ structure Context :=
     -- ^ Label for block we are verifying.
   (callbackFns : ProverInterface)
     -- ^ Functions for interacting with SMT solver.
-  (mcBlockEndAddr : MemAddr 64)
+  (mcBlockEndAddr : MemAddr 64) -- TODO(AMK) remove `mc` prefix
     -- ^ The end address of the block.
-  (mcBlockMap : RBMap (MemSegmentOff 64) Memory.Annotation (λ x y => x < y))
+  (mcBlockMap : RBMap (MemSegmentOff 64) Memory.Annotation (λ x y => x < y)) -- TODO(AMK) remove `mc` prefix
     -- ^ Map from addresses to annotations of events on that address.
 
 -- State that changes during execution of a BlockVCG action.
 structure State :=
-  (mcCurAddr : MemSegmentOff 64)
+  (mcCurAddr : MemSegmentOff 64) -- TODO(AMK) remove `mc` prefix
     -- ^ Address of the current instruction
-  (mcCurSize : MemWord 64)
+  (mcCurSize : MemWord 64) -- TODO(AMK) remove `mc` prefix
     -- ^ Size of current instruction.
-  (mcX87Top : Int)
+  (mcX87Top : Int) -- TODO(AMK) remove `mc` prefix
     -- ^ Top index in x86 stack (starts at 7 and grows down).
-  (mcDF : Bool)
+  (mcDF : Bool) -- TODO(AMK) remove `mc` prefix
     -- ^ Direction flag
-  (mcCurRegs : RegState X86Reg (Const SMT.Term))
+  (mcCurRegs : RegState X86Reg (Const SMT.Term)) -- TODO(AMK) remove `mc` prefix
     -- ^ Map registers to the SMT term.
-  (mcMemIndex : Nat)
+  (mcMemIndex : Nat) -- TODO(AMK) remove `mc` prefix
     -- ^ Index of last defined memory object.
   (mcEvents : List Event)
     -- ^ Unprocessed events from last instruction.
-  (mcLocalIndex : Int)
+  (mcLocalIndex : Int) -- TODO(AMK) remove `mc` prefix
     -- ^ Index of next local variable for machine code.
-  (mcPendingAllocaOffsetMap : RBMap LocalIdent Allocation.Annotation (λ x y => x < y))
+  (mcPendingAllocaOffsetMap : RBMap LocalIdent Allocation.Annotation (λ x y => x < y)) -- TODO(AMK) remove `mc` prefix
     -- ^ This is a map from allocation names to the annotations about their
     -- size and offset.
   (llvmInstIndex : Int)
@@ -573,7 +578,7 @@ def setCurrentLLVMStmt (s : LLVM.Stmt) : BlockVCG Unit :=
 
 -- | Use a map from symbol names to address to find address.
 def getMCAddrOfLLVMFunction
-  (m : RBMap ByteString (MemSegmentOff 64) (λ x y => x < y))
+  (m : RBMap ByteString (MemSegmentOff 64) ByteString.lt)
   -- ^ Map from symbol names in machine code
   -- to the address in the binary.
   (nm : String)
@@ -650,4 +655,5 @@ def main (args:List String) : IO UInt32 := do
 
 
 
+end ReoptVCG
 
