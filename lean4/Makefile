@@ -48,12 +48,13 @@ TARGET := $(BUILDDIR)/sim $(BUILDDIR)/driver $(BUILDDIR)/reopt-vcg
 all: $(TARGET)
 
 
+include app/Makefile.include
 include deps/galois_stdlib/Makefile.include
-include deps/llvm-tablegen-support/Makefile.include
 include deps/lean-llvm/Makefile.include
+include deps/llvm-tablegen-support/Makefile.include
+include deps/smtlib/Makefile.include
 include deps/x86_semantics/Makefile.include
 include simulator/Makefile.include
-include app/Makefile.include
 
 
 # The paths populating LEANFILES from the various above includes are absolute,
