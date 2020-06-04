@@ -203,25 +203,6 @@ def emit_trace_event (e : trace_event) : system_m Unit :=
 
 -- Linux calling conv: %rdi, %rsi, %rdx, %r10, %r8 and %r9, with %rax holding syscall number.
 
--- FIXME: these should maybe be in common?
-
-def rax_idx : Fin 16 := 0
-def rcx_idx : Fin 16 := 1
-def rdx_idx : Fin 16 := 2
-def rbx_idx : Fin 16 := 3
-def rsp_idx : Fin 16 := 4
-def rbp_idx : Fin 16 := 5
-def rsi_idx : Fin 16 := 6
-def rdi_idx : Fin 16 := 7
-def r8_idx  : Fin 16 := 8
-def r9_idx  : Fin 16 := 9
-def r10_idx : Fin 16 := 10
-def r11_idx : Fin 16 := 11
-def r12_idx : Fin 16 := 12
-def r13_idx : Fin 16 := 13
-def r14_idx : Fin 16 := 14
-def r15_idx : Fin 16 := 15
-
 -- def simple_syscall (f : system_state os_state -> machine_word) : system_m Unit :=
 --   modify (fun s => { s with machine_state := s.machine_state.update_gpreg rax_idx (fun _ => f s) })
 
