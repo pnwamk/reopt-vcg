@@ -114,8 +114,7 @@ lFun ← match getDefineByName lMod fnm with
        | Option.none => functionError fnm FnError.notFound;
 argBindings ← parseLLVMArgs fnm [] lFun.args.toList x86ArgGPRegs;
 let blockMap := buildBlockAnnMap fAnn;
-
--- blks <- traverse (parseBlockFn fnm blockMap) (defBody lFun)
+blks <- lFun.body.map $ parseBlockFn fnm blockMap;
 -- let blkMap = HMap.fromList [ (ppBlock (abLbl ab), ab) | ab <- blks ]
 -- case defBody lFun of
 --   [] ->

@@ -220,7 +220,10 @@ def moduleCatch (m : ModuleVCG Unit) :  ModuleVCG Unit :=
 -------------------------------------------------------
 
 structure AnnotatedBlock :=
-(annotation: )
+(annotation: BlockAnn)
+(label : llvm.block_label)
+(phiVarMap : RBMap String Unit Lean.strLt) -- FIXME
+(stmts : List Unit) -- FIXME
 
 
 end ReoptVCG

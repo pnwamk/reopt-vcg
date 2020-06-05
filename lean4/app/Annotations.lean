@@ -1,7 +1,9 @@
 import Galois.Init.Json
 import Init.Data.UInt
 import Init.Lean.Data.Json
+import Init.Lean.Data.Json.Basic
 import Init.Lean.Data.Json.Printer
+import Init.Lean.Data.Json.FromToJson
 import Init.Data.RBMap
 import Main.Elf
 
@@ -9,7 +11,7 @@ import Main.Elf
 namespace ReoptVCG
 
 open elf.elf_class (ELF64)
-open Lean (Json HasFromJson HasToJson)
+open Lean (Json HasFromJson HasToJson Array.hasFromJson List.hasToJson Nat.hasToJson)
 open Lean.Json
 
 structure FunctionAnn :=
@@ -193,13 +195,13 @@ inductive MemoryAnn
 | heapAccess : MemoryAnn
 -- ^ There is an access to heap memory.
 
--- BOOKMARK
--- def parseMemoryAnn (js:Json) : Except String MemoryAnn := do
--- -- TODO
+
+def parseMemoryAnn (js:Json) : Except String MemoryAnn :=
+Except.error "TODO: implement parseMemoryAnn"
 
 
--- def renderMemoryAnn (ann:MemoryAnn) : List (String × Json) :=
--- -- TODO
+def renderMemoryAnn (ann:MemoryAnn) : List (String × Json) :=
+[("TODO: implement renderMemoryAnn", toJson "TODO: implement renderMemoryAnn")]
 
 
 ------------------------------------------------------------------------
@@ -222,16 +224,30 @@ structure MCMemoryEvent :=
 (info : MemoryAnn)
 
 
+def MCMemoryEvent.fromJson (js : Json) : Option MCMemoryEvent :=
+Option.none -- TODO
+
+def MCMemoryEvent.toJson (me : MCMemoryEvent) : Json := 
+toJson $ "TODO: implement MCMemoryEvent.toJson" -- TODO
+
+instance MCMemoryEvent.hasFromJson : HasFromJson MCMemoryEvent :=
+⟨MCMemoryEvent.fromJson⟩
+instance MCMemoryEvent.hasToJson : HasToJson MCMemoryEvent :=
+⟨MCMemoryEvent.toJson⟩
+
+
+
+
 structure ReachableBlockAnn :=
-(startAddr : Unit)
+(startAddr : Nat) -- FIXME
  -- ^ Address of start of block in machine code
-(codeSize : Unit)
+(codeSize : Nat) -- FIXME
  -- ^ Number of bytes in block
-(x87Top : Unit)
+(x87Top : Nat) -- FIXME
  -- ^ The top of x87 stack (empty = 7, full = 0)
 (dfFlag : Bool)
  -- ^ The value of the DF flag (default = False)
-(preconds : List Unit)
+(preconds : List Nat) -- FIXME
  -- ^ List of preconditions for block.
 (allocas : RBMap String AllocaAnn Lean.strLt)
 -- ^ Maps identifiers to the allocation used to initialize them.
@@ -240,6 +256,35 @@ structure ReachableBlockAnn :=
 -- some block may not have been initialized.
 (memoryEvents : List MCMemoryEvent)
 -- ^ Annotates events within the block.
+
+
+inductive BlockAnn
+| reachable : ReachableBlockAnn → BlockAnn
+| unreachable : BlockAnn
+
+
+def parseBlockAnn (js:Json) : Except String BlockAnn :=
+Except.error "TODO: implement parseBlockAnn"
+
+
+def BlockAnn.toJson (block_label:String) : BlockAnn → Json
+| BlockAnn.unreachable =>
+  toJson $ RBMap.fromList [("label", toJson block_label),
+                           ("reachable", toJson false)]
+                        Lean.strLt
+| BlockAnn.reachable ann =>
+  toJson $ RBMap.fromList 
+           [("label", toJson block_label),
+            ("addr", toJson ann.startAddr),
+            ("size", toJson ann.codeSize),
+            ("x87_top", toJson ann.x87Top),
+            ("df_flag", toJson ann.dfFlag),
+            ("preconditions", toJson ann.preconds),
+            ("allocas", toJson $ ann.allocas.revFold (λ as _ a => a::as) []),
+            ("mem_events", toJson $ ann.memoryEvents)
+           ]
+           Lean.strLt
+
 
 
 end ReoptVCG
