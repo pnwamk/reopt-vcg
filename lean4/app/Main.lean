@@ -2,6 +2,8 @@
 import ReoptVCG.Annotations
 import ReoptVCG.ReoptVCG
 
+import ReoptVCG.LoadLLVM
+
 open ReoptVCG
 
 -- Modes of execution for `reopt-vcg`
@@ -62,12 +64,13 @@ IO.println
   ++ "   LLVM is faithful to the input binary.\n"
 
 
-def main (args:List String) : IO UInt32 :=
-  match parseArgs args initVCGArgs with
-  | Except.error msg => do
-    IO.println $ "Error encountered while parsing reopt-vcg command line arguments: " ++ msg;
-    showUsage;
-    pure 1
-  | Except.ok VCGCmd.showHelp => do showHelp; pure 0
-  | Except.ok (VCGCmd.runVCG cfg) => runVCG cfg
-      
+def main (args:List String) : IO UInt32 := do
+_ ← ReoptVCG.loadLLVMModule "test_add_diet_reopt.ll";
+pure 0
+  -- match parseArgs args initVCGArgs with
+  -- | Except.error msg => do
+  --   IO.println $ "Error encountered while parsing reopt-vcg command line arguments: " ++ msg;
+  --   showUsage;
+  --   pure 1
+  -- | Except.ok VCGCmd.showHelp => do showHelp; pure 0
+  -- | Except.ok (VCGCmd.runVCG cfg) => runVCG cfg
