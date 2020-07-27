@@ -124,6 +124,9 @@ quiet_cmd_LEAN = LEAN $<
 $(OBJDIR)/%.c $(OLEANDIR)/%.olean: %.lean | ${OLEANDIRS} $(CLEANDIRS)
 	$(call cmd,LEAN)
 
+$(OBJDIR)/%.cpp $(OLEANDIR)/%.olean: %.lean | ${OLEANDIRS} $(CLEANDIRS)
+	$(call cmd,LEAN)
+
 # mv $(BUILDDIR)/$*.cpp.tmp $(BUILDDIR)/$*.cpp
 
 # | ${EXTRAOBJDIRS}
