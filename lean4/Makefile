@@ -66,9 +66,6 @@ include deps/reopt_vcg/Makefile.include
 # include app/Makefile.include
 # include tests/Makefile.include
 
-EXTRAOBJFILES := $(addprefix ${EXTRAOBJDIR}/,$(patsubst %.c,%.o,$(patsubst $.cpp,%.o,$(EXTRACFILES))))
-EXTRAOBJDIRS  := $(call build-dirs,$(EXTRAOBJFILES))
-
 # all the output directories we need
 build-dirs = $(sort $(foreach ld,$(1),$(dir $(ld))))
 
@@ -105,11 +102,15 @@ depend: ${DEPFILES}
 # $(BUILDDIR)/driver: ${CLEANFILES} ${EXTRAOBJFILES} build/deps/lean-llvm/src/Driver.cpp
 # 	${LEANC} ${CXXFLAGS} `${LLVM_CONFIG} --cxxflags` -Wno-variadic-macros -Wno-gnu-zero-variadic-macro-arguments  -fexceptions -o $@ $^ `${LLVM_CONFIG} --ldflags --system-libs --libs x86 asmparser` -lstdc++ -lm
 
-$(BINDIR)/reopt-vcg : ${CLEANFILES} ${EXTRAOBJFILES} build/app/Main.c | ${BINDIR}
+$(BINDIR)/reopt-vcg : ${CLEANFILES} ${EXTRAOBJFILES} $(addprefix $(OBJDIR)/,app/Main.c) | ${BINDIR}
 	${LEANC} ${CXXFLAGS} `${LLVM_CONFIG} --cxxflags` -Wno-variadic-macros -Wno-gnu-zero-variadic-macro-arguments  -fexceptions -o $@ $^ `${LLVM_CONFIG} --ldflags --system-libs --libs x86 asmparser` -lstdc++ -lm
 
 # $(BUILDDIR)/reopt-vcg-unit-test : ${CLEANFILES} ${EXTRAOBJFILES} build/tests/Main.cpp
 # 	${LEANC} ${CXXFLAGS} `${LLVM_CONFIG} --cxxflags` -Wno-variadic-macros -Wno-gnu-zero-variadic-macro-arguments  -fexceptions -o $@ $^ `${LLVM_CONFIG} --ldflags --system-libs --libs x86 asmparser` -lstdc++ -lm
+
+EXTRAOBJFILES := $(addprefix ${EXTRAOBJDIR}/,$(patsubst %.c,%.o,$(patsubst $.cpp,%.o,$(EXTRACFILES))))
+EXTRAOBJDIRS  := $(call build-dirs,$(EXTRAOBJFILES))
+
 
 ${OLEANDIRS} ${CLEANDIRS} ${DEPDIRS} ${EXTRAOBJDIRS} ${BINDIR}:
 	$(call cmd,MKDIR)
