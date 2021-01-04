@@ -14,38 +14,57 @@ inductive VCGCmd
 -- while the are being processed.
 structure VCGArgs := 
   (annFile : Option String)
-  (mode : VerificationMode)
+  (mode : Option VerificationMode)
   (verbose : Bool)
 
 -- | State of argument parsing before any user arguments have actually
 -- been processed.
-def initVCGArgs := VCGArgs.mk Option.none VerificationMode.defaultMode false
+def initVCGArgs := VCGArgs.mk none none false
 
 -- Function for parsing command line arguments to reopt-vcg.
 partial def parseArgs : List String →  VCGArgs → Except String VCGCmd
 | [], args => do 
-  let annPath <- (args.annFile.map Except.ok).getD (throw "Missing VCG file to run.");
-  pure $ VCGCmd.runVCG $ VCGConfig.mk annPath args.mode args.verbose
+  let annPath <- (args.annFile.map Except.ok).getD (throw "Missing VCG file to run.")
+  let mode := match args.mode with
+              | none => VerificationMode.default
+              | some m => m
+  pure $ VCGCmd.runVCG $ VCGConfig.mk annPath mode args.verbose
 | (s::ss), args =>
   if s == "--help" then
     pure $ VCGCmd.showHelp
   else if s == "--verbose" || s == "-v" then
     parseArgs ss $ {args with verbose := true}
-  else if s == "--export" then do 
-    unless args.mode.isDefault do throw "Export mode does not use a solver, but --solver was specified.";
+  else if s == "--export" then do
+    unless args.mode.isNone do throw "Cannot specify --export or --solver multiple times."
     match ss with
     | [] => throw "missing argument for `--export` flag"
     | s'::ss' =>
-    parseArgs ss' $ {args with mode := VerificationMode.exportMode s'}
+    parseArgs ss' $ {args with mode := some $ VerificationMode.exportMode s'}
   else if s == "--solver" then do
-    unless args.mode.isDefault do throw "Cannot specify --export or --solver multiple times.";
+    unless args.mode.isNone do throw "Cannot specify --export or --solver multiple times.";
     match ss with
     | [] => throw "missing argument for `--solver` flag"
     | s'::ss' =>
     match String.split s' Char.isWhitespace with
     | [] => throw "Expected a solver name and command line argument(s)."
     | (solver::solverArgs) =>
-      parseArgs ss' $ {args with mode := VerificationMode.runSolverMode solver solverArgs}
+      let vm := VerificationMode.solverMode {SolverConfig.default with solverPathAndArgs := some (solver, solverArgs)}
+      parseArgs ss' $ {args with mode := some vm}
+  else if s == "--json-out" then do
+    match ss with
+    | [] => throw "missing argument for `--json-out` flag"
+    | s'::ss' =>
+      let mode := args.mode
+      match args.mode with
+      | none =>
+        mode := some (VerificationMode.solverMode {SolverConfig.default with jsonOut := some s'})
+      | some (VerificationMode.exportMode _) =>
+        throw "Cannot specify `--json-out` with `--export`."
+      | some (VerificationMode.solverMode solverCfg) =>
+        if solverCfg.jsonOut.isSome then do
+          throw "Cannot specify `--json-out` multiple times."
+        mode := some $ VerificationMode.solverMode {solverCfg with jsonOut := some s'}
+      parseArgs ss' $ {args with mode := mode}
   else do 
     when (String.isPrefixOf "--" s) $ throw $ "Unexpected flag " ++ s;
     when (Option.isSome args.annFile) $ throw "Multiple VCG files specified.";
@@ -53,7 +72,7 @@ partial def parseArgs : List String →  VCGArgs → Except String VCGCmd
 
 
 def showUsage : IO Unit := do
-  IO.println "Usage: reopt-vcg [-v|--verbose] <input.json> {--export <export-dir> | --solver <solver-path>}"
+  IO.println "Usage: reopt-vcg [-v|--verbose] <input.json> {--export <export-dir> | --solver <solver-path>} [--json-out <json-path>]"
   
 def showHelp : IO Unit := do
   showUsage;
